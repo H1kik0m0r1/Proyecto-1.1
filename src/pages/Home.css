@@ -1,0 +1,291 @@
+/* Home.css */
+
+/* Contenedor Base */
+.home-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f0f4f8;
+  position: relative;
+  overflow: hidden; /* Evita scroll doble */
+}
+
+/* Header Flotante */
+.home-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 1rem;
+  z-index: 20; /* Encima del mapa */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* Gradiente para legibilidad sobre el mapa */
+  background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0));
+  pointer-events: none; /* Permite tocar el mapa debajo en zonas vacías */
+}
+
+.home-header > * {
+  pointer-events: auto; /* Reactiva clicks en botones */
+}
+
+.icon-btn {
+  background: white;
+  border: none;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.header-title {
+    font-weight: 900;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    color: #1a1a1a;
+}
+
+.avatar-circle {
+    width: 45px;
+    height: 45px;
+    background-color: #000;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Área del Mapa */
+.map-area {
+  flex-grow: 1; /* Ocupa todo el espacio disponible */
+  position: relative;
+  background-color: #e5e7eb; /* Color de fondo si falla el mapa */
+  background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Google_Maps_Logo_2020.svg/1024px-Google_Maps_Logo_2020.svg.png'); /* Placeholder visual */
+  background-size: cover;
+  background-position: center;
+  opacity: 0.6; /* Un poco atenuado para que resalte la UI */
+}
+
+/* Tarjeta de Ubicación Actual (Feedback visual) */
+.location-card {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    backdrop-filter: blur(5px);
+    width: 80%;
+    text-align: center;
+}
+
+.location-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+}
+
+.location-text {
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+/* Panel de Acción (Bottom Sheet) */
+.action-sheet {
+  background: white;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+  z-index: 10;
+  min-height: 45vh; /* Ocupa casi la mitad inferior */
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.greeting {
+    font-size: 1.5rem;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.subtitle {
+    display: block;
+    font-size: 1rem;
+    color: #718096;
+    font-weight: normal;
+}
+
+/* Caja de Búsqueda (Fake Input) */
+.destination-box {
+    background-color: #f3f4f6;
+    padding: 1rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.2rem;
+    color: #4a5568;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.destination-box:focus {
+    border-color: #000;
+    background-color: #fff;
+    outline: none;
+}
+
+/* Grid de Atajos */
+.shortcuts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.shortcut-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.shortcut-card:active {
+    transform: scale(0.98);
+}
+
+.shortcut-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.bg-blue-100 { background-color: #ebf8ff; color: #3182ce; }
+.bg-orange-100 { background-color: #fffaf0; color: #dd6b20; }
+
+.shortcut-label {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+/* Actividad Reciente */
+.section-title {
+    font-size: 1rem;
+    color: #718096;
+    margin-bottom: 0.5rem;
+}
+
+.recent-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+}
+
+.time-icon {
+    color: #a0aec0;
+}
+
+.route-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.destination {
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.address {
+    font-size: 0.85rem;
+    color: #718096;
+}
+
+/* === MODO ALTO CONTRASTE (IHC Adaptation) === */
+.home-container.low-vision .action-sheet,
+.home-container.blind .action-sheet {
+    background-color: #000;
+    border-top: 4px solid #ffff00;
+}
+
+.home-container.low-vision .greeting,
+.home-container.low-vision .destination,
+.home-container.blind .greeting {
+    color: #ffff00;
+}
+
+.home-container.low-vision .destination-box,
+.home-container.blind .destination-box {
+    background-color: #1a1a1a;
+    color: #ffff00;
+    border: 2px solid #ffff00;
+}
+
+.home-container.blind .visual-map {
+    opacity: 0; /* Ocultar mapa visual innecesario */
+}
+/* Home.css */
+
+/* ... (Mantén tus estilos de container y header anteriores) ... */
+
+/* Área del Mapa Simplificada */
+.map-area {
+  flex-grow: 1; 
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background-color: #e5e7eb; /* Color de fondo base */
+}
+
+.visual-map-placeholder {
+    width: 100%;
+    height: 100%;
+    /* Imagen de fondo estática (simulación de mapa) */
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Google_Maps_Logo_2020.svg/1024px-Google_Maps_Logo_2020.svg.png');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.5; /* Atenuado para que resalte la tarjeta de ubicación */
+}
+
+/* Ajuste para Modo Ciego (Reducir ruido visual) */
+.home-container.blind .visual-map-placeholder {
+    background-image: none;
+    background-color: #000; /* Fondo negro puro */
+}
+
+/* ... (Mantén tus estilos de location-card y action-sheet) ... */
