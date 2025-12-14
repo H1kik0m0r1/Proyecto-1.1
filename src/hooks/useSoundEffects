@@ -1,0 +1,11 @@
+// hooks/useSoundEffects.js
+const playSound = (type) => {
+    const sounds = {
+        success: new Audio('/sounds/success.mp3'),
+        error: new Audio('/sounds/error.mp3'),
+        click: new Audio('/sounds/click_soft.mp3')
+    };
+    if (sounds[type]) sounds[type].play();
+};
+
+export default playSound;

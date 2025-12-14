@@ -1,53 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // <--- 1. IMPORTAR HOOK DE TRADUCCIÓN
 import { useAuth } from '../utils/authContext';
 import { useAccessibility } from '../context/AccessibilityContext';
 import { useScreenReader } from '../context/ScreenReaderContext';
 import './Home.css';
 
-// Iconos
-const MenuIcon = () => <span className="icon">☰</span>;
-const UserIcon = () => <span className="icon">👤</span>;
-const SearchIcon = () => <span className="icon">🔍</span>;
-const HomeIcon = () => <span className="icon">🏠</span>;
-const WorkIcon = () => <span className="icon">💼</span>;
+// Iconos (SVG inline para mejor rendimiento)
+const MenuIcon = () => <span className="icon" aria-hidden="true">☰</span>;
+const UserIcon = () => <span className="icon" aria-hidden="true">👤</span>;
+const SearchIcon = () => <span className="icon" aria-hidden="true">🔍</span>;
+const HomeIcon = () => <span className="icon" aria-hidden="true">🏠</span>;
+const WorkIcon = () => <span className="icon" aria-hidden="true">💼</span>;
 
 const Home = ({ onOpenMenu }) => {
+  // HOOKS
+  const { t } = useTranslation(); // <--- 2. INICIALIZAR
   const { speak } = useScreenReader();
   const { user } = useAuth();
   const { visionMode } = useAccessibility();
   const navigate = useNavigate();
   
-  // Estado para ubicación
-  const [currentLocation, setCurrentLocation] = useState("Localizando...");
+  // ESTADOS
+  const [currentLocation, setCurrentLocation] = useState(t('home.gps_searching')); // Texto inicial traducido
 
   // EFECTO: Simulación de GPS + Anuncio de Voz
   useEffect(() => {
-    // 1. Orientación inicial
-    speak("Pantalla de inicio. Buscando señal GPS.");
+    // 1. Orientación inicial (Usando la clave de traducción)
+    speak(t('home.gps_searching'));
 
     // 2. Simulación de hallazgo de ubicación
     const timer = setTimeout(() => {
       const mockAddress = "Av. Principal 123, Ciudad Central";
       setCurrentLocation(mockAddress);
       
-      // Feedback auditivo crucial (Heurística 1: Visibilidad del estado)
-      speak(`Ubicación actual: ${mockAddress}`);
+      // Feedback auditivo con interpolación de variables
+      // El JSON debe tener: "location_found": "Ubicación encontrada: {{address}}"
+      speak(t('home.location_found', { address: mockAddress }));
       
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, []); 
+  }, [t, speak]); // Agregamos dependencias para evitar warnings
 
+  // HANDLERS
   const handleDestinationClick = () => {
     if (navigator.vibrate) navigator.vibrate(50);
     navigate('/search');
   };
 
-  const handleQuickAction = (place) => {
-    speak(`Configurando destino a ${place}`);
-    // Lógica futura: navegar directo
-    console.log(`Ir a ${place}`);
+  const handleQuickAction = (placeName) => {
+    const msg = `Configurando destino a ${placeName}`;
+    speak(msg);
+    console.log(msg);
+    // Aquí iría la navegación real: navigate('/ride-select', { state: { destination: placeName } })
   };
 
   return (
@@ -55,42 +61,46 @@ const Home = ({ onOpenMenu }) => {
       {/* HEADER */}
       <header className="home-header">
         <button 
-            aria-label="Abrir menú lateral" 
+            aria-label={t('aria.open_menu')} // "Abrir menú de navegación"
             className="icon-btn"
             onClick={onOpenMenu}
         >
           <MenuIcon />
         </button>
-        <div className="header-title" role="heading" aria-level="1">
-           LOOKISM
-        </div>
-        <div className="profile-indicator" aria-label={`Perfil de ${user?.nombre || 'Usuario'}`}>
+        
+        <h1 className="header-title">LOOKISM</h1> {/* Semántica H1 para el título de la app */}
+        
+        <div 
+            className="profile-indicator" 
+            role="img" 
+            aria-label={`Perfil de ${user?.nombre || 'Usuario'}`}
+        >
             <div className="avatar-circle">
                 {user?.nombre ? user.nombre.charAt(0).toUpperCase() : <UserIcon />}
             </div>
         </div>
       </header>
 
-      {/* ÁREA CENTRAL (Sin Mapa Real, solo Decorativo) */}
-      <main className="map-area">
-        {/* Fondo decorativo estático */}
-        <div className="visual-map-placeholder" aria-hidden="true">
-            {/* Opcional: Una imagen estática de un mapa si quieres estética */}
-        </div>
+      {/* ÁREA CENTRAL (Mapa Decorativo) */}
+      <main className="map-area" aria-hidden="true"> 
+        {/* aria-hidden="true" porque el mapa es decorativo para ciegos, 
+            la info real está en la tarjeta flotante de abajo */}
+        <div className="visual-map-placeholder"></div>
 
-        {/* Tarjeta Flotante (Esto es lo que importa al usuario) */}
+        {/* Tarjeta Flotante (Info crítica) */}
         <div className="location-card" role="status" aria-live="polite">
-            <span className="location-label">Tu ubicación actual:</span>
+            <span className="location-label">{t('home.location_found', { address: '' }).split(':')[0]}:</span>
             <h2 className="location-text">{currentLocation}</h2>
         </div>
       </main>
 
       {/* PANEL INFERIOR (Action Sheet) */}
       <section className="action-sheet">
-        <h3 className="greeting">
-            Hola, {user?.nombre || 'Viajero'}. 
-            <span className="subtitle"> ¿A dónde vamos hoy?</span>
-        </h3>
+        <div className="greeting">
+            {/* Traducción con nombre de usuario */}
+            <h3>{t('home.welcome')}, {user?.nombre || 'Viajero'}</h3>
+            <span className="subtitle">¿A dónde quieres ir hoy?</span>
+        </div>
 
         {/* Input Falso (Botón de Búsqueda) */}
         <div 
@@ -98,15 +108,17 @@ const Home = ({ onOpenMenu }) => {
             onClick={handleDestinationClick}
             tabIndex="0"
             role="button"
-            aria-label="Buscar destino. Toca dos veces para escribir."
+            aria-label="Buscar destino. Toca dos veces para activar."
             onKeyDown={(e) => e.key === 'Enter' && handleDestinationClick()}
         >
             <SearchIcon />
             <span className="placeholder-text">Buscar destino...</span>
         </div>
 
-        {/* Atajos */}
+        {/* Atajos (Shortcuts) */}
         <div className="shortcuts-grid">
+            <h4 className="sr-only">{t('home.shortcuts')}</h4> {/* Título oculto para estructura */}
+            
             <button 
                 className="shortcut-card" 
                 onClick={() => handleQuickAction('Casa')}
@@ -115,6 +127,7 @@ const Home = ({ onOpenMenu }) => {
                 <div className="shortcut-icon bg-blue-100"><HomeIcon /></div>
                 <span className="shortcut-label">Casa</span>
             </button>
+            
             <button 
                 className="shortcut-card" 
                 onClick={() => handleQuickAction('Trabajo')}
@@ -128,18 +141,17 @@ const Home = ({ onOpenMenu }) => {
         {/* Recientes */}
         <div className="recent-activity">
             <h4 className="section-title">Recientes</h4>
-            <div 
+            <button 
                 className="recent-item" 
-                tabIndex="0" 
                 onClick={() => handleQuickAction('Hospital Central')}
                 aria-label="Viaje reciente: Hospital Central, Avenida Salud 500"
             >
                 <span className="time-icon" aria-hidden="true">🕒</span>
-                <div className="route-info">
-                    <span className="destination">Hospital Central</span>
-                    <span className="address">Av. Salud 500</span>
+                <div className="route-info text-left"> {/* text-left asegura alineación */}
+                    <span className="destination block font-bold">Hospital Central</span>
+                    <span className="address block text-sm text-gray-600">Av. Salud 500</span>
                 </div>
-            </div>
+            </button>
         </div>
       </section>
     </div>

@@ -1,53 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -------------------------------------------------------------------------- */
+/* 1. SISTEMA DE DISEÑO ELÁSTICO (Tipografía y Espaciado Matemático)          */
+/* -------------------------------------------------------------------------- */
 :root {
-  /* Variable dinámica controlada por React */
+  /* Variable reactiva controlada por AccessibilityContext */
   --font-scale: 1.0; 
 
-  /* TAMAÑOS BASE (Calculados) */
-  /* 1rem suele ser 16px. Aquí lo multiplicamos por la escala. */
+  /* TAMAÑOS DE TEXTO (Calculados dinámicamente) */
   --text-xs: calc(0.75rem * var(--font-scale));
   --text-sm: calc(0.875rem * var(--font-scale));
-  --text-base: calc(1rem * var(--font-scale));   /* Párrafos normales */
-  --text-lg: calc(1.125rem * var(--font-scale));  /* Subtítulos */
-  --text-xl: calc(1.5rem * var(--font-scale));    /* Títulos */
-  --text-2xl: calc(2rem * var(--font-scale));     /* Headers grandes */
+  --text-base: calc(1rem * var(--font-scale));   /* Párrafo estándar */
+  --text-lg: calc(1.125rem * var(--font-scale)); /* Subtítulos */
+  --text-xl: calc(1.5rem * var(--font-scale));   /* Títulos H3/H2 */
+  --text-2xl: calc(2rem * var(--font-scale));    /* Headers H1 */
+  --text-3xl: calc(3rem * var(--font-scale));    /* Hero Text */
 
-  /* ESPACIADOS BASE (También deben crecer para que los botones no aplasten el texto) */
+  /* ESPACIADO PROPORCIONAL (Evita que el texto grande rompa los contenedores) */
   --space-unit: calc(0.5rem * var(--font-scale));
+  
+  /* COLORES SEMÁNTICOS BASE */
+  --color-focus: #2563eb;       /* Azul eléctrico para foco estándar */
+  --color-warning: #c53030;     /* Rojo accesible para errores */
 }
 
+/* -------------------------------------------------------------------------- */
+/* 2. RESET Y BASES (IHC Foundations)                                         */
+/* -------------------------------------------------------------------------- */
 html {
-  font-size: 100%; /* Base del navegador */
+  font-size: 100%;
+  box-sizing: border-box;
+  scroll-behavior: smooth; /* Navegación suave, pero ver regla de movimiento reducido abajo */
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
 }
 
 body {
-  /* Aplicamos el tamaño base a todo */
+  font-family: 'Roboto', system-ui, -apple-system, sans-serif;
   font-size: var(--text-base);
-  line-height: 1.5; /* Crucial para lectura fácil */
+  line-height: 1.6; /* Mayor interlineado mejora la lectura en dislexia/baja visión */
+  color: #1a1a1a;
+  background-color: #f8fafc;
+  
+  /* Renderizado de texto optimizado */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* REGLAS DE SEGURIDAD PARA QUE NO SE ROMPA LA UI (IHC Robustness) */
+/* -------------------------------------------------------------------------- */
+/* 3. ROBUSTEZ DE UI (Evitar roturas con texto gigante)                       */
+/* -------------------------------------------------------------------------- */
 
-/* 1. Contenedores Flexibles: Nunca uses alturas fijas (height: 50px). Usa min-height. */
-button, input, .card, .header {
-  min-height: calc(3rem * var(--font-scale)); /* Altura mínima crece con el texto */
-  height: auto !important; /* Permite crecer si el texto ocupa 2 líneas */
+/* Regla de Oro: Altura mínima elástica */
+button, input, select, textarea, .card, .header, .nav-item {
+  /* Crece si la fuente crece. Nunca uses height fijo en px. */
+  min-height: calc(3rem * var(--font-scale)); 
+  height: auto !important; 
 }
 
-/* 2. Botones que respiran */
+/* Botones resilientes */
 button {
-  padding: var(--space-unit) calc(var(--space-unit) * 2); /* Padding dinámico */
-  white-space: normal; /* Permite que el texto del botón baje a otra línea si es muy grande */
-  overflow-wrap: break-word;
+  padding: var(--space-unit) calc(var(--space-unit) * 2);
+  white-space: normal; /* Permite que el texto baje de línea */
+  overflow-wrap: break-word; /* Evita desbordamiento horizontal */
+  touch-action: manipulation; /* Mejora respuesta táctil en móviles */
 }
 
-/* 3. Prevención de desbordamiento horizontal */
+/* Multimedia responsiva */
 img, svg, video {
   max-width: 100%;
   height: auto;
+  display: block; /* Elimina espacio fantasma debajo de imágenes */
 }
 
-/* 4. Inputs accesibles */
-input {
+/* Inputs accesibles */
+input, select, textarea {
   padding: var(--space-unit);
   font-size: var(--text-base);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 4. ACCESIBILIDAD CRÍTICA (Nivel WCAG AAA)                                  */
+/* -------------------------------------------------------------------------- */
+
+/* FOCUS RING VISIBLE (WCAG 2.4.7) */
+/* Reemplazamos el outline del navegador por uno de alto contraste doble */
+:focus-visible {
+  outline: 3px solid transparent; /* Fallback */
+  box-shadow: 0 0 0 4px #ffffff, 0 0 0 8px var(--color-focus);
+  z-index: 100; /* Asegura que el foco quede encima de todo */
+  border-radius: 4px;
+}
+
+/* UTILIDAD SR-ONLY */
+/* Oculta visualmente pero deja legible para Screen Readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* PREFERS-REDUCED-MOTION (Seguridad Vestibular) */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* 5. MODO ALTO CONTRASTE (Low Vision / Retinosis)                            */
+/* -------------------------------------------------------------------------- */
+
+/* Cuando la clase .high-contrast está en el body (o un contenedor padre) */
+.high-contrast {
+  --color-focus: #ffff00; /* Foco amarillo */
+  background-color: #000000 !important;
+  color: #ffff00 !important;
+}
+
+/* Forzar herencia en alto contraste */
+.high-contrast div, 
+.high-contrast p, 
+.high-contrast span, 
+.high-contrast h1, h2, h3, h4, h5, h6 {
+  color: #ffff00 !important;
+  border-color: #ffff00 !important;
+}
+
+.high-contrast button, 
+.high-contrast input {
+  background-color: #000000 !important;
+  color: #ffff00 !important;
+  border: 2px solid #ffff00 !important;
+}
+
+/* Invertir iconos o imágenes oscuras si es necesario */
+.high-contrast img {
+  filter: grayscale(100%) contrast(120%);
 }

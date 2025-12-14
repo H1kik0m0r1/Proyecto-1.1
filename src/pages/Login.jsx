@@ -2,19 +2,34 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../utils/authContext'
 import { verifyUser, saveUser } from '../utils/userStorage'
-import { useScreenReader } from '../context/ScreenReaderContext'; // Importar hook
+import { useScreenReader } from '../context/ScreenReaderContext'; 
 import './Login.css'
 
-// Definición de Iconos (Fuera del componente para mejor rendimiento)
-const GoogleIcon = () => <span style={{marginRight: '10px', fontWeight: 'bold', color: '#DB4437'}}>G</span>
-const AppleIcon = () => <span style={{marginRight: '10px', fontWeight: 'bold', color: '#000'}}></span>
+// 1. IMPORTAR EL HOOK DE ACCESIBILIDAD
+import { useAccessibility } from '../context/AccessibilityContext';
+
+// 2. IMPORTAR LAS IMÁGENES
+import logoStandard from '../assets/images/logo-standard.png';
+import logoHighContrast from '../assets/images/logo-high-contrast.png';
+
+// Iconos optimizados
+const GoogleIcon = () => <span style={{marginRight: '0.6em', fontWeight: 'bold', color: '#DB4437'}}>G</span>
+const AppleIcon = () => <span style={{marginRight: '0.6em', fontWeight: 'bold', color: '#000'}}></span>
 
 function Login() {
-  // 1. HOOKS (Todos juntos al inicio)
-  const { speak } = useScreenReader(); // Hook de accesibilidad
+  // 1. HOOKS
+  const { speak } = useScreenReader();
   const navigate = useNavigate()
   const { login } = useAuth()
   
+  // --- NUEVO: Lógica de UI Adaptativa ---
+  const { visionMode } = useAccessibility();
+
+  // Si el modo es 'standard', mostramos el logo blanco (o normal).
+  // Si es 'low-vision' o 'blind', mostramos el de alto contraste (negro/amarillo).
+  const currentLogo = visionMode === 'standard' ? logoStandard : logoHighContrast;
+  // --------------------------------------
+
   // 2. ESTADOS
   const [isLogin, setIsLogin] = useState(true)
   const [formData, setFormData] = useState({
@@ -33,23 +48,32 @@ function Login() {
     setSuccess('')
   }
 
+  // Simulación de Biometría
+  const handleBiometricLogin = () => {
+    if (window.confirm("Simulación: ¿Usar FaceID/TouchID?")) {
+        speak("Rostro reconocido. Iniciando sesión.");
+        login({ name: "Usuario Biométrico", email: "demo@lookism.app", preferences: { visionMode: 'standard'} });
+        navigate('/home');
+    } else {
+        speak("No se reconoció el rostro.");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setSuccess('')
     
-    // Feedback auditivo inmediato al procesar
     speak("Procesando, por favor espera.");
 
     if (isLogin) {
         if (!formData.email || !formData.password) { 
             const msg = 'Campos requeridos';
             setError(msg); 
-            speak(msg); // Leemos el error
+            speak(msg); 
             return; 
         }
 
-        // Asumiendo que userStorage.js ya es async como lo corregimos antes
         const result = await verifyUser(formData.email, formData.password) 
         
         if (result.success) {
@@ -62,7 +86,6 @@ function Login() {
             speak("Error: " + errorMsg);
         }
     } else {
-        // Registro
         try {
              if (formData.password !== formData.confirmPassword) {
                  throw new Error("Las contraseñas no coinciden");
@@ -74,7 +97,7 @@ function Login() {
                 email: formData.email,
                 password: formData.password,
                 fechaRegistro: new Date().toISOString(),
-                preferences: { visionMode: 'standard' } // Default
+                preferences: { visionMode: 'standard' } 
             }
             
             await saveUser(userData)
@@ -99,11 +122,17 @@ function Login() {
     <div className="login-container">
       <div className="login-content">
         
-        {/* Identidad Visual */}
+        {/* Identidad Visual ADAPTATIVA */}
         <div className="brand-header">
-          <div className="logo-pin">
-            <div className="pin-icon" aria-hidden="true">👁️</div> 
-          </div>
+          {/* IMPLEMENTACIÓN: Imagen dinámica */}
+          <img 
+            src={currentLogo} 
+            alt="Logotipo de Lookism" 
+            className="app-logo-image" 
+            // aria-hidden="true" si el texto "LOOKISM" de abajo ya lo lee el lector
+            // Si quitas el H1 de abajo, quita el aria-hidden
+          />
+          
           <h1 className="app-title">LOOKISM</h1>
           <h2 className="page-title">{isLogin ? 'Ingresar' : 'Crear una cuenta'}</h2>
         </div>
@@ -121,23 +150,24 @@ function Login() {
                  onChange={handleChange}
                  placeholder="Nombre completo"
                  className="custom-input"
+                 autoComplete="name" 
                  onFocus={() => speak("Campo Nombre Completo")}
                />
              </div>
           )}
-
+          
           <div className="input-group">
             <label htmlFor="email" className="sr-only">Correo electrónico</label>
             <input
-              type="text"
+              type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="número de teléfono o correo electrónico" 
+              placeholder="Correo electrónico" 
               className="custom-input"
-              // Lógica de Lector de Pantalla
-              onFocus={() => speak("Campo de correo electrónico o teléfono. Toca dos veces para editar.")}
+              autoComplete="username"
+              onFocus={() => speak("Campo de correo electrónico. Toca dos veces para editar.")}
               aria-invalid={!!error}
             />
           </div>
@@ -150,8 +180,9 @@ function Login() {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="contraseña"
+              placeholder="Contraseña"
               className="custom-input"
+              autoComplete={isLogin ? "current-password" : "new-password"}
               onFocus={() => speak("Campo de contraseña.")}
             />
           </div>
@@ -165,8 +196,9 @@ function Login() {
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                placeholder="confirmar contraseña"
+                placeholder="Confirmar contraseña"
                 className="custom-input"
+                autoComplete="new-password"
                 onFocus={() => speak("Confirma tu contraseña.")}
               />
             </div>
@@ -174,13 +206,17 @@ function Login() {
 
           {isLogin && (
             <div className="forgot-password">
-              <a href="#" onClick={(e) => { e.preventDefault(); speak("Función no disponible en el prototipo"); }}>
+              <button 
+                type="button" 
+                className="text-btn"
+                onClick={() => speak("Función no disponible en el prototipo")}
+              >
                 Contraseña olvidada?
-              </a>
+              </button>
             </div>
           )}
 
-          {/* Mensajes de Estado (Live Regions) */}
+          {/* Mensajes de Estado */}
           {error && <div role="alert" className="error-msg">{error}</div>}
           {success && <div role="status" className="success-msg">{success}</div>}
 
@@ -189,22 +225,46 @@ function Login() {
             {isLogin ? 'Ingresar' : 'Registrarse'}
           </button>
         </form>
-
+        
         {/* Navegación Alternativa */}
         <div className="toggle-section">
             {isLogin ? (
-                <p>No tienes una cuenta? <span onClick={() => setIsLogin(false)} className="link-action">Registrarse</span></p>
+                <p>
+                  No tienes una cuenta?{' '}
+                  <button 
+                    type="button" 
+                    onClick={() => setIsLogin(false)} 
+                    className="link-action"
+                    aria-label="Ir a registrarse"
+                  >
+                    Registrarse
+                  </button>
+                </p>
             ) : (
-                <p>Ya tienes una cuenta? <span onClick={() => setIsLogin(true)} className="link-action">Ingresa</span></p>
+                <p>
+                  Ya tienes una cuenta?{' '}
+                  <button 
+                    type="button" 
+                    onClick={() => setIsLogin(true)} 
+                    className="link-action"
+                    aria-label="Ir a ingresar"
+                  >
+                    Ingresa
+                  </button>
+                </p>
             )}
         </div>
 
-        {/* Social Login */}
         <div className="divider">
             <span>o</span>
         </div>
 
+        {/* Social Login */}
         <div className="social-buttons">
+            <button type="button" className="btn-social biometric" onClick={handleBiometricLogin}>
+                <span role="img" aria-label="Huella Digital">☝️</span> Ingresar con Biometría
+            </button>
+
             <button type="button" className="btn-social" onClick={() => speak("Iniciar con Google")}>
                 <GoogleIcon /> Continuar con Google
             </button>
